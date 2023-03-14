@@ -1,0 +1,8 @@
+.navigationMaxWidth {
+    max-width: 170px;
+}
+
+.navigationMoveToLeft {
+    display: flex;
+    justify-content: flex-end;
+}

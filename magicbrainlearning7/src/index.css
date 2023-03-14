@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+  font-family: 'Courier', sans-serif;
+  background: linear-gradient(to left, #ea8df7 0%, #a9a8ff 100%);
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+}
+
+.background {
+  background: linear-gradient(to right, #ea8df7 0%, #a9a8ff 100%);
+}
