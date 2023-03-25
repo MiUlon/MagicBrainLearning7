@@ -19,7 +19,8 @@ class App extends Component {
     super();
     this.state = {
       input: '',
-      imageURL: ''
+      imageURL: '',
+      box: {}
     };
   };
 
@@ -27,10 +28,31 @@ class App extends Component {
     this.setState({input: event.target.value});
   };
 
+  calculateFaceLocation = (data) => {
+    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
+    console.log('1. First coordinations: ', clarifaiFace);
+    const image = document.getElementById('inputImage');
+    console.log('2. Image: ', image)
+    const imageWidth = Number(image.width);
+    console.log('3. Width: ', imageWidth)
+    const imageHeight = Number(image.height);
+    console.log('4. Height: ', imageHeight)
+    return {
+      leftCol: clarifaiFace.left_col * imageWidth,
+      topRow: clarifaiFace.top_row * imageHeight,
+      rightCol: imageWidth - (clarifaiFace.right_col * imageWidth),
+      bottomRow: imageHeight - (clarifaiFace.bottom_row * imageHeight)
+    }
+  };
+
+  setFaceLocation = (box) => {
+    this.setState({box: box});
+  };
+
   onButtonSubmit = () => {
     this.setState({imageURL: this.state.input});
     app.models.predict(Clarifai.CELEBRITY_MODEL, this.state.input)
-    .then(response => console.log(response.outputs[0].data.regions[0].region_info.bounding_box))
+    .then(response => this.setFaceLocation(this.calculateFaceLocation(response)))
     .catch(error => console.log(error))
   };
 
@@ -42,7 +64,7 @@ class App extends Component {
         <BrainImage />
         <UserRank />
         <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit}/>
-        <FaceRecognition imageURL={this.state.imageURL} />
+        <FaceRecognition imageURL={this.state.imageURL} box={this.state.box}/>
       </div>
     )
   }
