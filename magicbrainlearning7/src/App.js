@@ -5,6 +5,8 @@ import BrainImage from './Components/BrainImage/BrainImage';
 import UserRank from './Components/UserRank/UserRank';
 import ImageLinkForm from './Components/ImageLinkForm/ImageLinkForm';
 import FaceRecognition from './Components/FaceRecognition/FaceRecognition';
+import SignInForm from './Components/SignInForm/SignInForm';
+import RegisterForm from './Components/RegisterForm/RegisterForm';
 import ParticlesBg from 'particles-bg';
 import Clarifai from 'clarifai';
 
@@ -20,7 +22,8 @@ class App extends Component {
     this.state = {
       input: '',
       imageURL: '',
-      box: {}
+      box: {},
+      route: 'signin'
     };
   };
 
@@ -30,13 +33,9 @@ class App extends Component {
 
   calculateFaceLocation = (data) => {
     const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
-    console.log('1. First coordinations: ', clarifaiFace);
     const image = document.getElementById('inputImage');
-    console.log('2. Image: ', image)
     const imageWidth = Number(image.width);
-    console.log('3. Width: ', imageWidth)
     const imageHeight = Number(image.height);
-    console.log('4. Height: ', imageHeight)
     return {
       leftCol: clarifaiFace.left_col * imageWidth,
       topRow: clarifaiFace.top_row * imageHeight,
@@ -61,6 +60,8 @@ class App extends Component {
       <div className='App'>
         <ParticlesBg type="circle" bg={true} />
         <Navigation />
+        <SignInForm />
+        <RegisterForm />
         <BrainImage />
         <UserRank />
         <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit}/>
