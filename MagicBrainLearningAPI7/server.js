@@ -1,9 +1,11 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const app = express();
 
 app.use(bodyParser.json());
+app.use(cors());
 
 const database = {
     users: [
@@ -35,7 +37,7 @@ app.post('/signin', (req, res) => {
         req.body.password === database.users[0].password) {
             res.json('Success');
         } else {
-            res.status(404).json('Cannot log in');
+            res.status(400).json('Cannot log in');
         }
 });
 
