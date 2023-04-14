@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import bcrypt from 'bcrypt-nodejs';
 import cors from 'cors';
 
 const app = express();
@@ -25,6 +26,13 @@ const database = {
             entries: 0,
             joined: new Date()
         }
+    ],
+    login: [
+        {
+            id: '01',
+            email: 'Mindaugas@gmail.com',
+            hash: ''
+        }
     ]
 }
 
@@ -33,6 +41,12 @@ app.get('/', (req, res) => {
 });
 
 app.post('/signin', (req, res) => {
+    bcrypt.compare("Mindaugas", '$2a$10$NeHU8Sh1/Lp.hGIGIuKtJe//FBwhh6/6DSRwD26mdMvDclY6Fd.lG', function(err, res) {
+        console.log('Password correct.')
+    });
+    bcrypt.compare("veggies", '$2a$10$NeHU8Sh1/Lp.hGIGIuKtJe//FBwhh6/6DSRwD26mdMvDclY6Fd.lG', function(err, res) {
+        console.log('Password incorrect.')
+    });
     if (req.body.email === database.users[0].email &&
         req.body.password === database.users[0].password) {
             res.json('Success');
@@ -43,6 +57,9 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
     const {name, email, password } = req.body;
+    bcrypt.hash("bacon", null, null, function(err, hash) {
+        console.log(hash); // $2a$10$NeHU8Sh1/Lp.hGIGIuKtJe//FBwhh6/6DSRwD26mdMvDclY6Fd.lG
+    });
     database.users.push({
         id: database.users.length+1,
         name: name,
