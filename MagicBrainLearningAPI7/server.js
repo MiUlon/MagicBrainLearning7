@@ -2,6 +2,18 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import bcrypt from 'bcrypt-nodejs';
 import cors from 'cors';
+import knex from 'knex';
+
+const postgresDB = knex({
+    client: 'pg',
+    connection: {
+        host : '127.0.0.1',
+        port : 5432,
+        user : 'postgres',
+        password : 'test',
+        database : 'MagicBrainLearning7'
+    }
+});
 
 const app = express();
 
