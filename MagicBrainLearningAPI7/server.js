@@ -53,63 +53,77 @@ app.get('/', (req, res) => {
 });
 
 app.post('/signin', (req, res) => {
-    bcrypt.compare("Mindaugas", '$2a$10$NeHU8Sh1/Lp.hGIGIuKtJe//FBwhh6/6DSRwD26mdMvDclY6Fd.lG', function(err, res) {
-        console.log('Password correct.')
-    });
-    bcrypt.compare("veggies", '$2a$10$NeHU8Sh1/Lp.hGIGIuKtJe//FBwhh6/6DSRwD26mdMvDclY6Fd.lG', function(err, res) {
-        console.log('Password incorrect.')
-    });
-    if (req.body.email === database.users[0].email &&
-        req.body.password === database.users[0].password) {
-            res.json('Success');
-        } else {
-            res.status(400).json('Cannot log in');
-        }
+    postgresDB.select('email', 'hash').from('login')
+        .where('email', '=', req.body.email)
+        .then(data => {
+            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
+            if (isValid) {
+                postgresDB.select('*').from('users')
+                    .where('email', '=', req.body.email)
+                    .then(user => {
+                        res.json(user[0])
+                    })
+                    .catch(error => res.status(400).json('Cannot signin'))
+            } else {
+                res.status(400).json('Cannot signin')
+            }
+        })
+        .catch(error => res.status(400).json('Cannot signin'))
 });
 
 app.post('/register', (req, res) => {
     const {name, email, password } = req.body;
-    bcrypt.hash("bacon", null, null, function(err, hash) {
-        console.log(hash); // $2a$10$NeHU8Sh1/Lp.hGIGIuKtJe//FBwhh6/6DSRwD26mdMvDclY6Fd.lG
-    });
-    database.users.push({
-        id: database.users.length+1,
-        name: name,
-        email: email,
-        password: password,
-        entries: 0,
-        joined: new Date()
-    });
-    return res.json(database.users[database.users.length-1]);
+    const hash = bcrypt.hashSync(password);
+    postgresDB.transaction(trx => {
+        trx.insert({
+            email: email,
+            hash: hash
+        })
+        .into('login')
+        .returning('email')
+        .then(loginEmail => {
+            return trx('users')
+                .returning('*')
+                .insert({
+                    name: name,
+                    email: loginEmail[0].email,
+                    joined: new Date()
+                })
+                .then(user => {
+                    res.json(user[0])
+            })
+        })
+        .then(trx.commit)
+        .catch(trx.rollback)
+    })
+        .catch(error => res.status(400).json('Cannot register'))
 });
 
 app.get('/profile/:id', (req, res) => {
     const { id } = req.params;
-    let found = false;
-    database.users.forEach(user => {
-        if (user.id === id) {
-            found = true;
-            res.json(user);
-        };
-    });
-    if (!found) {
-        res.status(404).json('User was not found');
-    };
+    postgresDB.select('*').from('users')
+        .where({
+            id: id
+        })
+        .then(user => {
+            if (user.length) {
+                res.json(user[0])
+            } else {
+                res.status(400).json('User was not found')
+            }
+    })
+    .catch(error => res.status(400).json('User was not found'))
 });
 
 app.put('/image', (req, res) => {
     const { id } = req.body;
-    let found = false;
-    database.users.forEach(user => {
-        if (user.id === id) {
-            found = true;
-            user.entries++;
-            res.json(user.entries);
-        };
-    });
-    if (!found) {
-        res.status(404).json('User was not found');
-    };
+    postgresDB('users').where('id', '=', id)
+        .increment('entries', 1)
+        .returning('entries')
+        .then(entries => {
+            res.json(entries[0])
+        })
+        .catch(error => res.status(400).json('Cannot add entries'))
 });
 
 app.listen(3001, console.log('Server is running on 3001 port.'));
