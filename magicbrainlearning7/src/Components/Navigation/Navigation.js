@@ -5,7 +5,7 @@ const Navigation = ({ onChangeRouteClick, isSignedIn }) => {
     if (isSignedIn) {
         return (
             <div className='navigationMoveToLeft'>
-                <p onClick={() => onChangeRouteClick('signin')} className='f3 black grow br3 shadow-5 ma4 pa3 navigationMaxWidth pointer'>Sign Out</p>
+                <p onClick={() => onChangeRouteClick('signout')} className='f3 black grow br3 shadow-5 ma4 pa3 navigationMaxWidth pointer'>Sign Out</p>
             </div>
         )
             } else {
