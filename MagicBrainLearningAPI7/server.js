@@ -3,6 +3,10 @@ import bodyParser from 'body-parser';
 import bcrypt from 'bcrypt-nodejs';
 import cors from 'cors';
 import knex from 'knex';
+import { handelRegister } from './Controllers/handelRegister.js';
+import { handelProfile } from './Controllers/handelProfile.js';
+import { handelImage } from './Controllers/handelImage.js';
+import { handelSignin} from './Controllers/handelSignin.js';
 
 const postgresDB = knex({
     client: 'pg',
@@ -48,82 +52,10 @@ const database = {
     ]
 }
 
-app.get('/', (req, res) => {
-    res.json(database.users);
-});
-
-app.post('/signin', (req, res) => {
-    postgresDB.select('email', 'hash').from('login')
-        .where('email', '=', req.body.email)
-        .then(data => {
-            const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-            if (isValid) {
-                postgresDB.select('*').from('users')
-                    .where('email', '=', req.body.email)
-                    .then(user => {
-                        res.json(user[0])
-                    })
-                    .catch(error => res.status(400).json('Cannot signin'))
-            } else {
-                res.status(400).json('Cannot signin')
-            }
-        })
-        .catch(error => res.status(400).json('Cannot signin'))
-});
-
-app.post('/register', (req, res) => {
-    const {name, email, password } = req.body;
-    const hash = bcrypt.hashSync(password);
-    postgresDB.transaction(trx => {
-        trx.insert({
-            email: email,
-            hash: hash
-        })
-        .into('login')
-        .returning('email')
-        .then(loginEmail => {
-            return trx('users')
-                .returning('*')
-                .insert({
-                    name: name,
-                    email: loginEmail[0].email,
-                    joined: new Date()
-                })
-                .then(user => {
-                    res.json(user[0])
-            })
-        })
-        .then(trx.commit)
-        .catch(trx.rollback)
-    })
-        .catch(error => res.status(400).json('Cannot register'))
-});
-
-app.get('/profile/:id', (req, res) => {
-    const { id } = req.params;
-    postgresDB.select('*').from('users')
-        .where({
-            id: id
-        })
-        .then(user => {
-            if (user.length) {
-                res.json(user[0])
-            } else {
-                res.status(400).json('User was not found')
-            }
-    })
-    .catch(error => res.status(400).json('User was not found'))
-});
-
-app.put('/image', (req, res) => {
-    const { id } = req.body;
-    postgresDB('users').where('id', '=', id)
-        .increment('entries', 1)
-        .returning('entries')
-        .then(entries => {
-            res.json(entries[0].entries)
-        })
-        .catch(error => res.status(400).json('Cannot add entries'))
-});
+app.get('/', (req, res) => { res.json(database.users) });
+app.post('/signin', (req, res) => { handelSignin(req, res, bcrypt, postgresDB) });
+app.post('/register', (req, res) => { handelRegister(req, res, bcrypt, postgresDB) });
+app.get('/profile/:id', (req, res) => { handelProfile(req, res, postgresDB) });
+app.put('/image', (req, res) => { handelImage(req, res, postgresDB) });
 
 app.listen(3001, console.log('Server is running on 3001 port.'));
